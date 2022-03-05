@@ -36,7 +36,24 @@ int main(void) {
 
 	printf("\nAttempting to overflow the arena.\n");
 	Arena_alloc(arena, 1024);
-
 	Arena_delete(arena);
+
+	printf("\nAllocating a dynamic arena.\n");
+	Arena *dynamic_arena = Arena_new_dynamic(1024);
+	printf("Arena location: %p\n", dynamic_arena);
+
+	printf("\nCreating a new variable qux in the dynamic arena.\n");
+	int *qux = Arena_alloc(dynamic_arena, sizeof(int));
+	printf("Location of qux: %p\n", qux);
+
+	printf("\nCreating a huge allocation in the dynamic arena.\n");
+	char *huge = Arena_alloc(dynamic_arena, 2048);
+	printf("Location of huge: %p\n", huge);
+
+	printf("\nCreating a new, smaller allocation in the dynamic arena.\n");
+	char *small = Arena_alloc(dynamic_arena, 256);
+	printf("Location of small: %p\n", small);
+
+	Arena_delete(dynamic_arena);
 	return 0;
 }

@@ -7,8 +7,12 @@ extern "C" {
 
 typedef struct Arena Arena;
 
-// Takes the size of the arena in bytes.
+// Allocates a fixed-size arena. Accepts the size of the arena in bytes.
 Arena *Arena_new(size_t size);
+
+/* Allocates a dynamically-sized arena. Accepts the initial size of the arena in bytes.
+ * If there is not enough space in the arena for an allocation, a new region will be created. */
+Arena *Arena_new_dynamic(size_t size);
 
 // Frees the entire arena from memory.
 void Arena_delete(Arena *arena);
