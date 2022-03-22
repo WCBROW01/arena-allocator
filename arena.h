@@ -1,3 +1,7 @@
+/* This memory arena implementation was created by Will Brown (WCBROW01).
+ * Orginal source can be found at: https://github.com/WCBROW01/arena-allocator
+ * Licensed under the MIT License (c) 2022 Will Brown */
+
 #ifndef ARENA_H
 #define ARENA_H
 
