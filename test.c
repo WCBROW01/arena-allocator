@@ -54,6 +54,17 @@ int main(void) {
 	char *small = Arena_alloc(dynamic_arena, 256);
 	printf("Location of small: %p\n", small);
 
+	printf("\nAttempting to free small.\n");
+	int result = Arena_free(dynamic_arena, small);
+	if (result) printf("Free successful.\n");
+	else printf("Free failed.\n");
+
+	printf("\nCreating another allocation to verify that the two locations are identical.\n");
+	char *free_test = Arena_alloc(dynamic_arena, 256);
+	printf("Location of test allocation: %p\n", free_test);
+	if (free_test == small) printf("Success.\n");
+	else printf("Failed.\n");
+
 	Arena_delete(dynamic_arena);
 	return 0;
 }

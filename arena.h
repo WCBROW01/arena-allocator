@@ -24,6 +24,11 @@ void Arena_delete(Arena *arena);
 // Will return a null pointer if you've tried allocating too much memory.
 void *Arena_alloc(Arena *arena, size_t size);
 
+/* Will free the last block of memory allocated in the arena if the pointer
+ * passed in points to it. Otherwise, it does nothing.
+ * Returns 1 if the block was freed, 0 if an invalid pointer was given. */
+int Arena_free(Arena *arena, void *ptr);
+
 /* Copy a block of memory into an arena.
  * Functionally equivalent to memcpy. */
 void *Arena_copy(Arena *arena, const void *src, size_t size);

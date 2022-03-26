@@ -73,7 +73,10 @@ static void print_diagnostic(Arena *arena, size_t size) {
 }
 
 static inline void *Arena_init_block(Arena *arena, size_t size) {
-	void *new_block = arena->next_block;
+	/* Store a pointer to the last block in the arena so that the last state of
+	 * the arena can be restored if this block is freed. */
+	void *new_block = arena->next_block + sizeof(void*);
+	*(void**) (new_block - sizeof(void*)) = arena->last_block;
 	arena->last_block = new_block;
 	arena->next_block += align(size);
 	return new_block;
@@ -98,6 +101,20 @@ void *Arena_alloc(Arena *arena, size_t size) {
 		}
 	} else {
 		return Arena_init_block(arena, size);
+	}
+}
+
+/* Will free the last block of memory allocated in the arena if the pointer
+ * passed in points to it. Otherwise, it does nothing.
+ * Returns 1 if the block was freed, 0 if an invalid pointer was given. */
+int Arena_free(Arena *arena, void *ptr) {
+	if (arena->last_block == NULL || ptr != arena->last_block) {
+		return 0;
+	} else {
+		ptr -= sizeof(void*);
+		arena->next_block = ptr;
+		arena->last_block = *(void**) ptr;
+		return 1;
 	}
 }
 
