@@ -64,6 +64,7 @@ void Arena_delete(Arena *arena) {
 	free(arena);
 }
 
+#ifdef ENABLE_DIAG
 static void print_diagnostic(Arena *arena, size_t size) {
 	fprintf(stderr, "Diagnostic info:\n");
 	fprintf(stderr, "Arena size: %zu bytes\n", arena->size);
@@ -71,6 +72,7 @@ static void print_diagnostic(Arena *arena, size_t size) {
 	fprintf(stderr, "New block size: %zu bytes\n", size);
 	fprintf(stderr, "New size upon success: %zu bytes\n", arena->next_block + align(size) - Arena_start(arena));
 }
+#endif
 
 static inline void *Arena_init_block(Arena *arena, size_t size) {
 	/* Store a pointer to the last block in the arena so that the last state of
@@ -95,8 +97,10 @@ void *Arena_alloc(Arena *arena, size_t size) {
 				return Arena_alloc(arena->next_region, size);
 			}
 		} else {
+#ifdef ENABLE_DIAG
 			fprintf(stderr, "Allocation too large. You've attempted to allocate a block of memory past the end of the arena.\n");
 			print_diagnostic(arena, size);
+#endif
 			return NULL;
 		}
 	} else {
@@ -140,8 +144,10 @@ void *Arena_realloc(Arena *arena, void *ptr, size_t size) {
 			if (arena->dynamic) {
 				return Arena_copy(arena, ptr, size);
 			} else {
+#ifdef ENABLE_DIAG
 				fprintf(stderr, "Allocation too large. You've attempted to allocate a block of memory past the end of the arena.\n");
 				print_diagnostic(arena, size - (arena->next_block - arena->last_block));
+#endif
 				return NULL;
 			}
 		} else {
