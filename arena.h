@@ -1,4 +1,4 @@
-/* This memory arena implementation was created by Will Brown (WCBROW01).
+/* This arena allocator implementation was created by Will Brown (WCBROW01).
  * Orginal source can be found at: https://github.com/WCBROW01/arena-allocator
  * Licensed under the MIT License (c) 2022 Will Brown */
 
@@ -24,11 +24,6 @@ void Arena_delete(Arena *arena);
 // Will return a null pointer if you've tried allocating too much memory.
 void *Arena_alloc(Arena *arena, size_t size);
 
-/* Will free the last block of memory allocated in the arena if the pointer
- * passed in points to it. Otherwise, it does nothing.
- * Returns 1 if the block was freed, 0 if an invalid pointer was given. */
-int Arena_free(Arena *arena, void *ptr);
-
 /* Copy a block of memory into an arena.
  * Functionally equivalent to memcpy. */
 void *Arena_copy(Arena *arena, const void *src, size_t size);
@@ -38,6 +33,14 @@ void *Arena_copy(Arena *arena, const void *src, size_t size);
  * Be careful with this! A null pointer will be returned upon error.
  * Using this with memory outside of the arena is undefined behavior. */
 void *Arena_realloc(Arena *arena, void *ptr, size_t size);
+
+/* Marks the beginning of a temporary buffer that can be deallocated at any time.
+ * The state of the last one is saved in case you have multiple. */
+void Arena_tmp_begin(Arena *arena);
+
+/* Deallocates the last temporary buffer. If there is none,
+ * the entire arena will be deallocated. */
+void Arena_tmp_rewind(Arena *arena);
 
 #ifdef __cplusplus
 }

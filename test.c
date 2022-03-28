@@ -50,19 +50,19 @@ int main(void) {
 	char *huge = Arena_alloc(dynamic_arena, 2048);
 	printf("Location of huge: %p\n", huge);
 
-	printf("\nCreating a new, smaller allocation in the dynamic arena.\n");
+	printf("\nCreating a temporary buffer to hold a new, smaller allocation in the dynamic arena.\n");
+	Arena_tmp_begin(dynamic_arena);
 	char *small = Arena_alloc(dynamic_arena, 256);
 	printf("Location of small: %p\n", small);
 
-	printf("\nAttempting to free small.\n");
-	int result = Arena_free(dynamic_arena, small);
-	if (result) printf("Free successful.\n");
-	else printf("Free failed.\n");
+	printf("\nRewinding the temporary buffer.\n");
+	Arena_tmp_rewind(dynamic_arena);
 
-	printf("\nCreating another allocation to verify that the two locations are identical.\n");
-	char *free_test = Arena_alloc(dynamic_arena, 256);
-	printf("Location of test allocation: %p\n", free_test);
-	if (free_test == small) printf("Success.\n");
+	printf("\nCreating another buffer and allocation to verify that the two locations are identical.\n");
+	Arena_tmp_begin(dynamic_arena);
+	char *rewind_test = Arena_alloc(dynamic_arena, 256);
+	printf("Location of test allocation: %p\n", rewind_test);
+	if (rewind_test == small) printf("Success.\n");
 	else printf("Failed.\n");
 
 	Arena_delete(dynamic_arena);

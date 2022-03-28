@@ -1,4 +1,4 @@
-/* This memory arena implementation was created by Will Brown (WCBROW01).
+/* This arena allocator implementation was created by Will Brown (WCBROW01).
  * Orginal source can be found at: https://github.com/WCBROW01/arena-allocator
  * Licensed under the MIT License (c) 2022 Will Brown */
 
@@ -16,6 +16,7 @@
 // The arena region itself is allocated after the contents of the struct.
 struct Arena {
 	size_t size;
+	size_t tmp_size;
 	void *last_block;
 	void *next_block;
 	Arena *next_region;
@@ -33,6 +34,7 @@ Arena *Arena_new(size_t size) {
 
 	*new_arena = (Arena) {
 		.size = size,
+		.tmp_size = 0,
 		.last_block = NULL,
 		.next_block = Arena_start(new_arena),
 		.next_region = NULL,
@@ -49,6 +51,7 @@ Arena *Arena_new_dynamic(size_t size) {
 
 	*new_arena = (Arena) {
 		.size = size,
+		.tmp_size = 0,
 		.last_block = NULL,
 		.next_block = Arena_start(new_arena),
 		.next_region = NULL,
@@ -75,12 +78,11 @@ static void print_diagnostic(Arena *arena, size_t size) {
 #endif
 
 static inline void *Arena_init_block(Arena *arena, size_t size) {
-	/* Store a pointer to the last block in the arena so that the last state of
-	 * the arena can be restored if this block is freed. */
-	void *new_block = arena->next_block + sizeof(void*);
-	*(void**) (new_block - sizeof(void*)) = arena->last_block;
+	size_t blksize = align(size);
+	arena->tmp_size += blksize;
+	void *new_block = arena->next_block;
 	arena->last_block = new_block;
-	arena->next_block += align(size);
+	arena->next_block += blksize;
 	return new_block;
 }
 
@@ -105,20 +107,6 @@ void *Arena_alloc(Arena *arena, size_t size) {
 		}
 	} else {
 		return Arena_init_block(arena, size);
-	}
-}
-
-/* Will free the last block of memory allocated in the arena if the pointer
- * passed in points to it. Otherwise, it does nothing.
- * Returns 1 if the block was freed, 0 if an invalid pointer was given. */
-int Arena_free(Arena *arena, void *ptr) {
-	if (arena->last_block == NULL || ptr != arena->last_block) {
-		return 0;
-	} else {
-		ptr -= sizeof(void*);
-		arena->next_block = ptr;
-		arena->last_block = *(void**) ptr;
-		return 1;
 	}
 }
 
@@ -156,5 +144,57 @@ void *Arena_realloc(Arena *arena, void *ptr, size_t size) {
 		}
 	} else {
 		return Arena_copy(arena, ptr, size);
+	}
+}
+
+/* Marks the beginning of a temporary buffer that can be deallocated at any time.
+ * The state of the last one is saved in case you have multiple. */
+void Arena_tmp_begin(Arena *arena) {
+	size_t tmp_size = arena->tmp_size;
+	void *last_block = arena->last_block;
+	arena->tmp_size = 0;
+
+	void *state = Arena_alloc(arena, sizeof(size_t) + sizeof(void*));
+	if (state == NULL) return;
+	*(size_t*) state = tmp_size;
+	*(void**) (state + sizeof(void*)) = last_block;
+}
+
+static void tmp_rewind(Arena *arena, bool *complete) {
+	void *stateloc = arena->next_block - arena->tmp_size;
+	if (arena->next_region != NULL) {
+		tmp_rewind(arena->next_region, complete);
+		arena->next_region = NULL;
+	}
+
+	if (*complete) return;
+
+	if (stateloc == Arena_start(arena)) {
+		Arena_delete(arena);
+	} else {
+		arena->tmp_size = *(size_t*) stateloc;
+		arena->last_block = *(void**) (stateloc + sizeof(size_t));
+		arena->next_block = stateloc;
+		*complete = true;
+	}
+}
+
+/* Deallocates the last temporary buffer. If there is none,
+ * the entire arena will be deallocated. */
+void Arena_tmp_rewind(Arena *arena) {
+	bool complete = false;
+
+	if (arena->next_region != NULL) {
+		tmp_rewind(arena->next_region, &complete);
+		arena->next_region = NULL;
+	}
+
+	if (!complete) {
+		void *stateloc = arena->next_block - arena->tmp_size;
+		if (stateloc != Arena_start(arena)) {
+			arena->tmp_size = *(size_t*) stateloc;
+			arena->last_block = *(void**) (stateloc + sizeof(size_t));
+		}
+		arena->next_block = stateloc;
 	}
 }
