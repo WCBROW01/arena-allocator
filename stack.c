@@ -43,7 +43,7 @@ int Stack_free(Stack *stack, void *ptr) {
  * Functionally equivalent to memcpy. */
 void *Stack_copy(Stack *stack, const void *src, size_t size) {
 	Arena_tmp_begin(stack);
-	return Arena_alloc(stack, size);
+	return Arena_copy(stack, src, size);
 }
 
 /* If the pointer is to the last allocation, it will be resized.
