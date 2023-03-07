@@ -2,6 +2,7 @@
  * Orginal source can be found at: https://github.com/WCBROW01/arena-allocator
  * Licensed under the MIT License (c) 2022 Will Brown */
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -10,7 +11,7 @@
 #include "arena.h"
 
 #define next_multiple(a, b) ((a) + (b) - (a) % (b))
-#define MEM_ALIGNMENT sizeof(void*)
+#define MEM_ALIGNMENT sizeof(max_align_t)
 #define align(n) ((n) % MEM_ALIGNMENT == 0 ? (n) : next_multiple(n, MEM_ALIGNMENT))
 
 // The arena region itself is allocated after the contents of the struct.
