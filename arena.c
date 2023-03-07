@@ -5,13 +5,14 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdalign.h>
 #include <stdbool.h>
 #include <string.h>
 
 #include "arena.h"
 
 #define next_multiple(a, b) ((a) + (b) - (a) % (b))
-#define MEM_ALIGNMENT sizeof(max_align_t)
+#define MEM_ALIGNMENT alignof(max_align_t)
 #define align(n) ((n) % MEM_ALIGNMENT == 0 ? (n) : next_multiple(n, MEM_ALIGNMENT))
 
 // The arena region itself is allocated after the contents of the struct.
